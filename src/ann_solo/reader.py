@@ -147,6 +147,9 @@ class SpectralLibraryReader:
         Convert an MsmsSpectrum object into a dictionary representation for
         bulk insertion.
         """
+        annotation = spectrum.annotation
+        if annotation is not None:
+            annotation = [ann if ann is not None else '' for ann in annotation]
         return {
             'identifier': spectrum.identifier,
             'peptide': spectrum.peptide,
@@ -154,7 +157,7 @@ class SpectralLibraryReader:
             'precursor_mz': spectrum.precursor_mz,
             'mz': spectrum.mz,
             'intensity': spectrum.intensity,
-            'annotation': spectrum.annotation,
+            'annotation': annotation,
             'is_decoy': spectrum.is_decoy,
             'projection': spectrum.projection
         }
@@ -249,12 +252,13 @@ class SpectralLibraryReader:
                     batch_cnt = 0
             if batch:
                 spectra_store.write_spectra_to_library(batch)
-            logging.info(
-                'Create scalar index on charge and identifier for fast '
-                'retrieval from store.')
-            spectra_store.store.create_scalar_index("precursor_charge",
-                                                    index_type="BITMAP")
-            spectra_store.store.create_scalar_index("identifier")
+            # Scalar index creation is not supported in lancedb 0.3.x
+            # logging.info(
+            #     'Create scalar index on charge and identifier for fast '
+            #     'retrieval from store.')
+            # spectra_store.store.create_scalar_index("precursor_charge",
+            #                                         index_type="BITMAP")
+            # spectra_store.store.create_scalar_index("identifier")
         self.spec_info = {
             'charge': {
                 charge: {

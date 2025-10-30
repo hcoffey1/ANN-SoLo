@@ -46,12 +46,24 @@ compile_args = ['-O3', '-march=native', '-ffast-math', '-fno-associative-math',
                 '-std=c++14']
 cython_directives = {'boundscheck': False, 'wraparound': False,
                      'initializedcheck': False, 'language_level': 3}
-ext_spectrum_match.cython_directives = cython_directives
+
+extensions = []
+
+spectrum_match_pyx = os.path.join('ann_solo', 'spectrum_match.pyx')
+if os.path.exists(spectrum_match_pyx):
+    ext_spectrum_match = setuptools.Extension(
+        'ann_solo.spectrum_match_fast', [spectrum_match_pyx],
+        language='c++', extra_compile_args=compile_args,
+        extra_link_args=compile_args, include_dirs=[np.get_include()])
+    ext_spectrum_match.cython_directives = cython_directives
+    extensions.append(ext_spectrum_match)
+
 ext_parsers = setuptools.Extension(
     'ann_solo.parsers', ['ann_solo/parsers.pyx'],
     language='c++', extra_compile_args=compile_args,
     extra_link_args=compile_args, include_dirs=[np.get_include()])
 ext_parsers.cython_directives = cython_directives
+extensions.append(ext_parsers)
 
 cmdclass = {}
 if use_cython:
@@ -105,5 +117,5 @@ setuptools.setup(
     setup_requires=[
         'Cython',
         'numpy'],
-    ext_modules=[ext_spectrum_match, ext_parsers],
+    ext_modules=extensions,
 )

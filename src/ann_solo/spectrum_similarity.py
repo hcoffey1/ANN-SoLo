@@ -507,9 +507,15 @@ class SpectrumSimilarityCalculator:
                 *self.unmatched_int_library,
             ]
             with warnings.catch_warnings():
-                warnings.simplefilter(
-                    "ignore", scipy.stats.PearsonRConstantInputWarning
-                )
+                # Handle scipy API change: PearsonRConstantInputWarning -> NearConstantInputWarning
+                try:
+                    warnings.simplefilter(
+                        "ignore", scipy.stats.PearsonRConstantInputWarning
+                    )
+                except AttributeError:
+                    warnings.simplefilter(
+                        "ignore", scipy.stats.NearConstantInputWarning
+                    )
                 corr = scipy.stats.pearsonr(int_query, int_library)[0]
             return corr if not np.isnan(corr) else 0.0
         else:
@@ -534,9 +540,15 @@ class SpectrumSimilarityCalculator:
                 *self.unmatched_int_library,
             ]
             with warnings.catch_warnings():
-                warnings.simplefilter(
-                    "ignore", scipy.stats.SpearmanRConstantInputWarning
-                )
+                # Handle scipy API change: SpearmanRConstantInputWarning -> NearConstantInputWarning
+                try:
+                    warnings.simplefilter(
+                        "ignore", scipy.stats.SpearmanRConstantInputWarning
+                    )
+                except AttributeError:
+                    warnings.simplefilter(
+                        "ignore", scipy.stats.NearConstantInputWarning
+                    )
                 corr = scipy.stats.spearmanr(int_query, int_library)[0]
             return corr if not np.isnan(corr) else 0.0
         else:

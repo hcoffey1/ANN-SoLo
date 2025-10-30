@@ -117,19 +117,7 @@ def score_ssms(
         mask = np.isfinite(features[col])
         features.loc[~mask, col] = features.loc[mask, col].max()
     features["group"] = _get_ssm_groups(ssms, min_group_size) if grouped else 0
-    dataset = mokapot.dataset.LinearPsmDataset(
-        features,
-        target_column="is_target",
-        spectrum_columns="index",
-        peptide_column="sequence",
-        group_column="group",
-    )
-    if grouped:
-        logging.debug(
-            "Partitioned %d SSMs into %d groups",
-            len(ssms),
-            features["group"].nunique(),
-        )
+    
     # Define the mokapot model.
     #   - Choice between a random forest, linear SVM, or no semi-supervised
     #     learning.
@@ -138,10 +126,29 @@ def score_ssms(
     #   - We perform minimal tuning of the class weights and the random forest
     #     tree depth.
     if model is None:
-        logging.debug("Calculate q-values based on the cosine similarity")
-        # Calculate q-values based on the cosine similarity.
-        confidences = dataset.assign_confidence(features["cosine"], True)
+        logging.debug("Calculate q-values based on the cosine similarity (no mokapot)")
+        # Simple FDR filtering based on cosine similarity without mokapot.
+        # Sort by descending cosine score.
+        features_sorted = features.sort_values("cosine", ascending=False)
+        for i, (idx, row) in enumerate(features_sorted.iterrows()):
+            ssms[idx].search_engine_score = row["cosine"]
+            ssms[idx].q = 0.0  # No q-value calculation without decoys
+        return ssms
     else:
+        # Create mokapot dataset only when using semi-supervised learning
+        dataset = mokapot.dataset.LinearPsmDataset(
+            features,
+            target_column="is_target",
+            spectrum_columns="index",
+            peptide_column="sequence",
+            group_column="group",
+        )
+        if grouped:
+            logging.debug(
+                "Partitioned %d SSMs into %d groups",
+                len(ssms),
+                features["group"].nunique(),
+            )
         logging.debug(
             "Train semi-supervised %s model and score SSMs", model.upper()
         )

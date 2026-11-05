@@ -252,13 +252,12 @@ class SpectralLibraryReader:
                     batch_cnt = 0
             if batch:
                 spectra_store.write_spectra_to_library(batch)
-            # Scalar index creation is not supported in lancedb 0.3.x
-            # logging.info(
-            #     'Create scalar index on charge and identifier for fast '
-            #     'retrieval from store.')
-            # spectra_store.store.create_scalar_index("precursor_charge",
-            #                                         index_type="BITMAP")
-            # spectra_store.store.create_scalar_index("identifier")
+            logging.info(
+                'Create scalar index on charge and identifier for fast '
+                'retrieval from store.')
+            spectra_store.store.create_scalar_index("precursor_charge",
+                                                    index_type="BITMAP")
+            spectra_store.store.create_scalar_index("identifier")
         self.spec_info = {
             'charge': {
                 charge: {
